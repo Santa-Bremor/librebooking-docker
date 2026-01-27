@@ -5,8 +5,8 @@ It features:
 
 * A reverse proxy based on nginx that automatically handle certificates
 * The usage of secrets to forward passwords to the docker container
-* A librebooking service `lb1` reachable at <https://your.host.com:8080/book>
-* A librebooking service `lb2` reachable at <https://your.host.com:8080>
+* A librebooking service `lb1` reachable at <https://your.host.com/book>
+* A librebooking service `lb2` reachable at <https://your.host.com>
 * 2 docker volumes for services `lb1` and `lb2`
 * 2 cron jobs for services `lb1` and `lb2`
 

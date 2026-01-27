@@ -3,7 +3,7 @@
 This setup is meant for accessing the application from your local network.
 It features:
 
-* A librebooking container reachable at <http://localhost:8080>
+* A librebooking container reachable at <http://localhost>
 * A docker volume
 * A cron container
 
