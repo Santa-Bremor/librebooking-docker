@@ -12,11 +12,9 @@ LABEL org.opencontainers.image.source="https://github.com/librebooking/docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 LABEL org.opencontainers.image.authors="colisee@hotmail.com"
 
-# Copy entrypoint scripts
-COPY --chmod=755 bin /usr/local/bin/
-
-# Create cron jobs
-COPY --chown=www-data:www-data lb-jobs-cron /config/
+# Copy entrypoint scripts и cron
+COPY --chmod=755 ./docker/bin /usr/local/bin/
+COPY --chown=www-data:www-data ./docker/lb-jobs-cron /config/
 
 # Copy composer
 COPY --from=comp /usr/bin/composer /usr/bin/composer
@@ -37,9 +35,9 @@ RUN set -ex; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
-# Customize
+# Customize Apache & PHP + DocumentRoot fix (всё ещё root)
 RUN set -ex; \
-    chown www-data:www-data /config;\
+    chown www-data:www-data /config; \
     cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"; \
     { \
      echo 'RemoteIPHeader X-Real-IP'; \
@@ -48,44 +46,32 @@ RUN set -ex; \
      echo 'RemoteIPInternalProxy 192.168.0.0/16'; \
     } > /etc/apache2/conf-available/remoteip.conf; \
     a2enconf remoteip; \
-    a2enmod rewrite; \
-    a2enmod headers; \
-    a2enmod remoteip; \
+    a2enmod rewrite headers remoteip; \
     docker-php-ext-configure gd --with-jpeg --with-freetype; \
     docker-php-ext-install mysqli gd ldap; \
     pecl install timezonedb; \
     docker-php-ext-enable timezonedb; \
-    mkdir --parent /var/log/librebooking; \
+    mkdir -p /var/log/librebooking; \
     chown www-data:www-data /var/log/librebooking; \
     touch /usr/local/etc/php/conf.d/librebooking.ini; \
-    chown www-data:www-data /usr/local/etc/php/conf.d/librebooking.ini
-
-# Get and customize librebooking
+    chown www-data:www-data /usr/local/etc/php/conf.d/librebooking.ini; 
+    
+# Copy local source code
 USER www-data
-ARG APP_GH_REF
+WORKDIR /var/www/html
+COPY --chown=www-data:www-data ./src ./
+
+# Install dependencies + fixes + tpl_c (уже от www-data — права на vendor/ будут правильные)
 RUN set -ex; \
-    curl \
-      --fail \
-      --silent \
-      --location https://api.github.com/repos/Santa-Bremor/librebooking-app/tarball/${APP_GH_REF} \
-    | tar --extract --gzip --directory=/var/www/html --strip-components=1; \
-    if [ -f /var/www/html/composer.json ]; then \
-      sed \
-        -i /var/www/html/composer.json \
-        -e "s:\(.*\)nickdnk/graph-sdk\(.*\)7.0\(.*\):\1joelbutcher/facebook-graph-sdk\26.1\3:" ;\
-      composer install; \
+    if [ -f composer.json ]; then \
+      sed -i -e "s:\(.*\)nickdnk/graph-sdk\(.*\)7\.0\(.*\):\1joelbutcher/facebook-graph-sdk\26\.1\3:" composer.json; \
+      composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader --no-progress; \
     fi; \
-    sed \
-      -i /var/www/html/database_schema/create-user.sql \
-      -e "s:^DROP USER ':DROP USER IF EXISTS ':g" \
-      -e "s:booked_user:schedule_user:g" \
-      -e "s:localhost:%:g"; \
-    if ! [ -d /var/www/html/tpl_c ]; then \
-      mkdir /var/www/html/tpl_c; \
-    fi
+    mkdir -p tpl_c; \
+    chown www-data:www-data tpl_c
 
 # Environment
-WORKDIR    /
-VOLUME     /config
+WORKDIR /
+VOLUME /config
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD        ["apache2-foreground"]
+CMD ["apache2-foreground"]

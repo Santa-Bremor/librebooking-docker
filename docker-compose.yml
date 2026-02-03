@@ -1,0 +1,51 @@
+name: librebooking
+
+services:
+  db:
+    image: linuxserver/mariadb:10.6.13
+    restart: always
+    volumes:
+      - ./db_data:/config
+    networks:
+      - librebooking-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Minsk
+      - MYSQL_ROOT_PASSWORD=your_secure_root_password
+      - MYSQL_DATABASE=librebooking
+      - MYSQL_USER=lb_user
+      - MYSQL_PASSWORD=db_user_pwd
+  app:
+    image: sbnexus.group.santa.local/librebooking:0.1.0
+    container_name: librebooking-app
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app_config:/config
+      - ./uploads/images:/var/www/html/Web/uploads/images
+      - ./uploads/reservation:/var/www/html/Web/uploads/reservation
+    networks:
+      - librebooking-net
+    environment:
+      - PUID=33
+      - PGID=33 
+      - LB_DATABASE_NAME=librebooking                                                                   
+      - LB_DATABASE_USER=lb_user
+      - LB_DATABASE_PASSWORD=db_user_pwd
+      - LB_DATABASE_HOSTSPEC=db                                                                         
+      - LB_INSTALL_PASSWORD=app_install_pwd
+      - LB_LOGGING_FOLDER=/var/log/librebooking                                                         
+      - LB_LOGGING_LEVEL=debug
+      - LB_LOGGING_SQL=false
+      - LB_DEFAULT_TIMEZONE=Europe/Minsk
+networks:
+  librebooking-net:
+    name: librebooking-net
