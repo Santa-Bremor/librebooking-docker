@@ -17,7 +17,7 @@ services:
       - MYSQL_USER=lb_user
       - MYSQL_PASSWORD=db_user_pwd
   app:
-    image: sbnexus.group.santa.local/librebooking:0.1.0
+    image: sbnexus.group.santa.local/librebooking:0.4.0
     container_name: librebooking-app
     platform: linux/amd64
     build:
@@ -35,8 +35,8 @@ services:
     networks:
       - librebooking-net
     environment:
-      - PUID=33
-      - PGID=33 
+      - PUID=1000
+      - PGID=1000
       - LB_DATABASE_NAME=librebooking                                                                   
       - LB_DATABASE_USER=lb_user
       - LB_DATABASE_PASSWORD=db_user_pwd
