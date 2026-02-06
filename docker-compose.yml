@@ -17,7 +17,7 @@ services:
       - MYSQL_USER=lb_user
       - MYSQL_PASSWORD=db_user_pwd
   app:
-    image: sbnexus.group.santa.local/librebooking:0.4.1
+    image: sbnexus.group.santa.local/librebooking:0.4.2
     container_name: librebooking-app
     platform: linux/amd64
     build:
