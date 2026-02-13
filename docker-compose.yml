@@ -6,6 +6,8 @@ services:
     restart: always
     volumes:
       - ./db_data:/config
+    ports:
+      - "3306:3306"
     networks:
       - librebooking-net
     environment:
@@ -17,7 +19,7 @@ services:
       - MYSQL_USER=lb_user
       - MYSQL_PASSWORD=db_user_pwd
   app:
-    image: sbnexus.group.santa.local/librebooking:0.4.3
+    image: sbnexus.group.santa.local/librebooking:0.4.4
     container_name: librebooking-app
     platform: linux/amd64
     build:
